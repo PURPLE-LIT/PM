@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>등록 제품 관리</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f4ff;color:#1a1d2e;font-size:14px;display:flex;height:100vh;overflow:hidden}
+
+/* ── Sidebar ── */
+.sidebar{width:220px;background:#fff;border-right:1px solid #e8ecf4;display:flex;flex-direction:column;flex-shrink:0}
+.sidebar-logo{padding:18px 16px;border-bottom:1px solid #e8ecf4;display:flex;align-items:center;gap:10px}
+.sidebar-logo .icon{width:32px;height:32px;background:linear-gradient(135deg,#4f6ef7,#7c3aed);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sidebar-logo .icon svg{color:#fff}
+.sidebar-logo span{font-size:12px;font-weight:700;color:#1a1d2e;line-height:1.4}
+.sidebar-section{padding:16px 16px 4px;font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.8px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:9px 12px;margin:1px 8px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:500;color:#6b7280;transition:all .15s;user-select:none}
+.nav-item:hover{background:#f5f7ff;color:#4f6ef7}
+.nav-item.active{background:#eef1ff;color:#4f6ef7;font-weight:600}
+.nav-item svg{flex-shrink:0;opacity:.7}
+.nav-item.active svg{opacity:1}
+.nav-item .nc{margin-left:auto;font-size:11px;font-weight:700}
+.sidebar-bottom{margin-top:auto;padding:12px 8px;border-top:1px solid #e8ecf4}
+.today-box{background:#f5f7ff;border-radius:10px;padding:11px 14px}
+.today-box .tdate{font-size:11px;color:#9ca3af;margin-bottom:2px}
+.today-box .ttime{font-size:13px;font-weight:700;color:#4f6ef7}
+
+/* ── Main ── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{height:56px;background:#fff;border-bottom:1px solid #e8ecf4;display:flex;align-items:center;padding:0 20px;gap:12px;flex-shrink:0}
+.topbar h1{font-size:16px;font-weight:700;flex:1}
+.search-bar{display:flex;align-items:center;gap:8px;background:#f5f7ff;border:1px solid #e8ecf4;border-radius:8px;padding:0 12px;height:34px;width:200px}
+.search-bar input{border:none;outline:none;background:transparent;font-size:13px;width:100%;color:#1a1d2e}
+.search-bar input::placeholder{color:#9ca3af}
+.btn{height:34px;padding:0 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;display:inline-flex;align-items:center;gap:6px;transition:all .15s;white-space:nowrap}
+.btn-primary{background:linear-gradient(135deg,#4f6ef7,#7c3aed);color:#fff}
+.btn-primary:hover{opacity:.9}
+.btn-ghost{background:transparent;color:#6b7280;border:1px solid #e8ecf4}
+.btn-ghost:hover{background:#f5f7ff;color:#4f6ef7}
+.btn-sm{height:30px;padding:0 12px;font-size:12px;border-radius:7px}
+.btn-outline{background:#fff;color:#4f6ef7;border:1.5px solid #4f6ef7;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:all .15s;height:30px;padding:0 12px;font-size:12px;border-radius:7px}
+.btn-outline:hover{background:#eef1ff}
+.btn-red{background:#fee2e2;color:#ef4444;border:none;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:all .15s;height:30px;padding:0 12px;font-size:12px;border-radius:7px}
+.btn-red:hover{background:#fecaca}
+.btn-green{background:#d1fae5;color:#065f46;border:none;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:all .15s;height:30px;padding:0 12px;font-size:12px;border-radius:7px}
+.btn-green:hover{background:#a7f3d0}
+
+/* ── Pages ── */
+.page{display:none;flex:1;overflow:hidden;flex-direction:column}
+.page.active{display:flex}
+
+/* ── Dashboard ── */
+.content{flex:1;overflow-y:auto;padding:20px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}
+.stat-card{background:#fff;border-radius:12px;padding:16px 18px;border:1px solid #e8ecf4;position:relative;overflow:hidden;cursor:pointer;transition:box-shadow .15s}
+.stat-card:hover{box-shadow:0 4px 16px rgba(79,110,247,.12)}
+.stat-card .s-label{font-size:12px;color:#9ca3af;margin-bottom:5px;font-weight:500}
+.stat-card .s-val{font-size:26px;font-weight:800;letter-spacing:-1px;line-height:1}
+.stat-card .s-sub{font-size:11px;color:#9ca3af;margin-top:5px}
+.stat-card .s-icon{position:absolute;right:14px;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center}
+.s-icon.blue{background:#eef1ff}.s-icon.blue svg{color:#4f6ef7}
+.s-icon.green{background:#d1fae5}.s-icon.green svg{color:#10b981}
+.s-icon.amber{background:#fef3c7}.s-icon.amber svg{color:#f59e0b}
+.s-icon.red{background:#fee2e2}.s-icon.red svg{color:#ef4444}
+.s-icon.purple{background:#f3e8ff}.s-icon.purple svg{color:#7c3aed}
+
+/* ── Remind banner ── */
+.remind-banner{background:#fff;border:1px solid #fca5a5;border-radius:12px;padding:14px 18px;margin-bottom:20px}
+.remind-banner h3{font-size:13px;font-weight:700;color:#dc2626;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.remind-item{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid #fef2f2}
+.remind-item:last-child{border-bottom:none}
+.remind-item .ri-left{display:flex;align-items:center;gap:10px}
+.remind-item .ri-cat{font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px}
+.cat-new{background:#eef1ff;color:#4f6ef7}
+.cat-change{background:#f3e8ff;color:#7c3aed}
+.cat-gmp{background:#fef3c7;color:#92400e}
+.remind-item .ri-name{font-size:13px;font-weight:600}
+.remind-item .ri-detail{font-size:11px;color:#9ca3af}
+.remind-item .ri-right{display:flex;align-items:center;gap:8px}
+.days-badge{font-size:12px;font-weight:700;padding:3px 8px;border-radius:6px}
+.days-critical{background:#fee2e2;color:#dc2626}
+.days-warning{background:#fef3c7;color:#92400e}
+
+/* ── List page ── */
+.list-page-wrap{flex:1;display:grid;grid-template-columns:1fr 420px;overflow:hidden;gap:0}
+.list-left{display:flex;flex-direction:column;border-right:1px solid #e8ecf4;overflow:hidden}
+.list-toolbar{padding:12px 16px;border-bottom:1px solid #e8ecf4;background:#fff;display:flex;gap:8px;align-items:center}
+.tab-row{display:flex;gap:3px;background:#f5f7ff;padding:3px;border-radius:8px}
+.tab-btn{padding:5px 12px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;border:none;background:transparent;color:#9ca3af;transition:all .15s}
+.tab-btn.active{background:#fff;color:#4f6ef7;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.filter-sel{padding:5px 8px;border-radius:7px;border:1px solid #e8ecf4;font-size:12px;color:#6b7280;outline:none;background:#fff;font-family:inherit}
+.list-scroll{flex:1;overflow-y:auto;background:#fff}
+.list-header-row{display:grid;grid-template-columns:2fr 1fr 1fr 90px;padding:8px 16px;font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid #f0f4ff;background:#fafbff;position:sticky;top:0;z-index:1}
+.product-row{display:grid;grid-template-columns:2fr 1fr 1fr 90px;align-items:center;padding:11px 16px;gap:8px;cursor:pointer;transition:background .1s;border-bottom:1px solid #f9fafb}
+.product-row:hover{background:#f5f7ff}
+.product-row.selected{background:#eef1ff}
+.pr-name-wrap .pr-name{font-weight:600;font-size:13px;display:flex;align-items:center;gap:7px}
+.pr-name-wrap .pr-sub{font-size:11px;color:#9ca3af;margin-top:1px;padding-left:15px}
+.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.dot-approved{background:#10b981}.dot-pending{background:#f59e0b}.dot-rejected{background:#ef4444}
+.pr-badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:5px;font-size:11px;font-weight:700}
+.badge-approved{background:#d1fae5;color:#065f46}
+.badge-pending{background:#fef3c7;color:#92400e}
+.badge-rejected{background:#fee2e2;color:#991b1b}
+.pr-rev-count{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:6px;background:#f0f4ff;color:#4f6ef7;font-size:11px;font-weight:700}
+.pr-date-cell{font-size:12px;color:#6b7280}
+.pr-date-cell.urgent{color:#dc2626;font-weight:700}
+
+/* ── Detail right panel ── */
+.detail-right{display:flex;flex-direction:column;overflow:hidden;background:#fff}
+.detail-empty-panel{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;color:#9ca3af;gap:10px}
+.detail-empty-panel svg{opacity:.25}
+.detail-empty-panel p{font-size:13px}
+.detail-panel-content{display:flex;flex-direction:column;flex:1;overflow:hidden}
+.detail-top-grad{padding:18px 20px;background:linear-gradient(135deg,#4f6ef7,#7c3aed);color:#fff;flex-shrink:0}
+.detail-top-grad .d-cat-label{font-size:10px;opacity:.7;text-transform:uppercase;letter-spacing:.8px;margin-bottom:3px}
+.detail-top-grad h3{font-size:17px;font-weight:800;letter-spacing:-.3px;margin-bottom:2px}
+.detail-top-grad .d-mfg{font-size:12px;opacity:.8}
+.detail-status-badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:5px;font-size:11px;font-weight:700;margin-top:8px;background:rgba(255,255,255,.22);color:#fff}
+.detail-scroll{flex:1;overflow-y:auto;padding:0}
+.detail-section{padding:14px 18px;border-bottom:1px solid #f5f7ff}
+.detail-section h4{font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.7px;margin-bottom:10px}
+.d-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.d-field .k{font-size:11px;color:#9ca3af;margin-bottom:2px}
+.d-field .v{font-size:13px;font-weight:600;color:#1a1d2e}
+.d-field .v.em{color:#9ca3af;font-weight:400}
+.d-field .v.urgent{color:#dc2626}
+
+/* ── Revision list in detail ── */
+.rev-list{display:flex;flex-direction:column;gap:6px}
+.rev-item{background:#f9fafb;border-radius:8px;border:1px solid #e8ecf4;overflow:hidden}
+.rev-item.urgent-border{border-color:#fca5a5;background:#fff5f5}
+.rev-head{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;cursor:pointer;user-select:none}
+.rev-head-left{display:flex;align-items:center;gap:8px}
+.rev-order{font-size:11px;font-weight:700;background:#4f6ef7;color:#fff;padding:2px 7px;border-radius:4px}
+.rev-title{font-size:12px;font-weight:600}
+.rev-deadline{font-size:11px;padding:2px 6px;border-radius:4px;font-weight:600}
+.rev-deadline.urgent{background:#fee2e2;color:#dc2626}
+.rev-deadline.warning{background:#fef3c7;color:#92400e}
+.rev-deadline.ok{background:#f5f7ff;color:#6b7280}
+.rev-toggle{color:#9ca3af;font-size:12px;transition:transform .2s}
+.rev-toggle.open{transform:rotate(180deg)}
+.rev-body{padding:0 12px 10px;display:none;border-top:1px solid #e8ecf4;margin-top:0}
+.rev-body.open{display:block}
+.rev-body-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding-top:10px}
+.rb-field .k{font-size:10px;color:#9ca3af;margin-bottom:2px}
+.rb-field .v{font-size:12px;font-weight:600;color:#1a1d2e}
+.rb-field .v.em{color:#9ca3af;font-weight:400}
+.rb-field.full{grid-column:1/-1}
+.rb-notes{font-size:12px;color:#6b7280;line-height:1.6;white-space:pre-wrap;background:#fff;border-radius:6px;padding:6px 8px;border:1px solid #e8ecf4;margin-top:6px}
+.add-rev-btn{margin-top:8px;width:100%;height:30px;background:#f5f7ff;border:1.5px dashed #c7d2fe;color:#4f6ef7;font-size:12px;font-weight:600;cursor:pointer;border-radius:8px;display:flex;align-items:center;justify-content:center;gap:5px;transition:all .15s}
+.add-rev-btn:hover{background:#eef1ff;border-color:#4f6ef7}
+.detail-actions-bar{padding:12px 18px;border-top:1px solid #e8ecf4;display:flex;gap:8px;flex-shrink:0}
+
+/* ── Modal ── */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:200;align-items:center;justify-content:center;padding:20px}
+.overlay.open{display:flex}
+.modal{background:#fff;border-radius:14px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.18);animation:up .2s ease}
+.modal.wide{max-width:600px}
+@keyframes up{from{transform:translateY(10px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal-head{padding:18px 20px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #f0f4ff;position:sticky;top:0;background:#fff;z-index:1}
+.modal-head h2{font-size:15px;font-weight:700}
+.close-btn{background:none;border:none;cursor:pointer;color:#9ca3af;display:flex;padding:2px;border-radius:4px}
+.close-btn:hover{background:#f5f7ff;color:#6b7280}
+.modal-body{padding:18px 20px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fg{display:flex;flex-direction:column;gap:4px}
+.fg.full{grid-column:1/-1}
+.fg label{font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.4px}
+.fg input,.fg select,.fg textarea{border:1.5px solid #e8ecf4;border-radius:8px;padding:8px 11px;font-size:13px;color:#1a1d2e;outline:none;font-family:inherit;transition:border-color .15s}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:#4f6ef7;box-shadow:0 0 0 3px rgba(79,110,247,.1)}
+.fg textarea{resize:vertical;min-height:64px}
+.modal-foot{padding:14px 20px;border-top:1px solid #f0f4ff;display:flex;gap:8px;justify-content:flex-end;position:sticky;bottom:0;background:#fff}
+.section-divider{grid-column:1/-1;font-size:11px;font-weight:700;color:#4f6ef7;text-transform:uppercase;letter-spacing:.5px;padding:8px 0 2px;border-top:1px solid #f0f4ff;margin-top:4px}
+
+/* ── Toast ── */
+.toasts{position:fixed;bottom:20px;right:20px;z-index:500;display:flex;flex-direction:column;gap:7px}
+.toast{background:#1a1d2e;color:#fff;padding:10px 14px;border-radius:9px;font-size:13px;font-weight:500;display:flex;align-items:center;gap:8px;box-shadow:0 4px 20px rgba(0,0,0,.15);animation:up .2s ease}
+.toast.ok{border-left:3px solid #10b981}
+.toast.err{border-left:3px solid #ef4444}
+.empty-list{padding:40px;text-align:center;color:#9ca3af;font-size:13px}
+.confirm-body{font-size:14px;color:#6b7280;line-height:1.6}
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="icon">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+        <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+      </svg>
+    </div>
+    <span>등록 제품<br>관리 시스템</span>
+  </div>
+
+  <div class="sidebar-section">Overview</div>
+  <div class="nav-item active" id="nav-dashboard" onclick="goPage('dashboard')">
+    <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    대시보드
+  </div>
+
+  <div class="sidebar-section">제품 유형</div>
+  <div class="nav-item" id="nav-new" onclick="goPage('new')">
+    <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    신규 제품 등록
+    <span class="nc" style="color:#4f6ef7" id="nc-new">0</span>
+  </div>
+  <div class="nav-item" id="nav-change" onclick="goPage('change')">
+    <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+    변경 진행
+    <span class="nc" style="color:#7c3aed" id="nc-change">0</span>
+  </div>
+  <div class="nav-item" id="nav-gmp" onclick="goPage('gmp')">
+    <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+    GMP 등록
+    <span class="nc" style="color:#f59e0b" id="nc-gmp">0</span>
+  </div>
+
+  <div class="sidebar-section" style="margin-top:4px">기타</div>
+  <div class="nav-item" onclick="exportCSV()">
+    <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 16V4m0 12-4-4m4 4 4-4M4 20h16"/></svg>
+    CSV 내보내기
+  </div>
+
+  <div class="sidebar-bottom">
+    <div class="today-box">
+      <div class="tdate" id="todayDate"></div>
+      <div class="ttime" id="nowTime"></div>
+    </div>
+  </div>
+</aside>
+
+<!-- Main -->
+<div class="main">
+  <div class="topbar">
+    <h1 id="pageTitle">대시보드</h1>
+    <div class="search-bar">
+      <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" id="searchInput" placeholder="제품명 검색…" oninput="onSearch()">
+    </div>
+    <button class="btn btn-ghost btn-sm" onclick="exportCSV()">내보내기</button>
+    <button class="btn btn-primary btn-sm" id="addBtn" onclick="openAdd()">
+      <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+      새 제품 등록
+    </button>
+  </div>
+
+  <!-- Dashboard page -->
+  <div class="page active" id="page-dashboard">
+    <div class="content">
+      <div class="stats" id="dashStats"></div>
+      <div id="remindSection"></div>
+      <div style="background:#fff;border-radius:12px;border:1px solid #e8ecf4;padding:16px 18px">
+        <h3 style="font-size:13px;font-weight:700;margin-bottom:14px;color:#6b7280">전체 제품 현황</h3>
+        <div id="dashProductList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- New / Change / GMP pages (same structure) -->
+  <div class="page" id="page-new">
+    <div class="list-page-wrap">
+      <div class="list-left">
+        <div class="list-toolbar">
+          <div class="tab-row">
+            <button class="tab-btn active" data-tab="all" onclick="setTab('new','all',this)">전체</button>
+            <button class="tab-btn" data-tab="허가 완료" onclick="setTab('new','허가 완료',this)">허가 완료</button>
+            <button class="tab-btn" data-tab="보완 중" onclick="setTab('new','보완 중',this)">보완 중</button>
+            <button class="tab-btn" data-tab="반려" onclick="setTab('new','반려',this)">반려</button>
+          </div>
+          <select class="filter-sel" id="mfg-new" onchange="renderList('new')"><option value="">전체 제조처</option></select>
+        </div>
+        <div class="list-scroll">
+          <div class="list-header-row"><div>제품명</div><div>접수일</div><div>허가일</div><div>상태 / 보완</div></div>
+          <div id="list-new"></div>
+        </div>
+      </div>
+      <div class="detail-right" id="detail-new"><div class="detail-empty-panel"><svg width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg><p>제품을 선택하면<br>상세 정보가 표시됩니다</p></div></div>
+    </div>
+  </div>
+
+  <div class="page" id="page-change">
+    <div class="list-page-wrap">
+      <div class="list-left">
+        <div class="list-toolbar">
+          <div class="tab-row">
+            <button class="tab-btn active" data-tab="all" onclick="setTab('change','all',this)">전체</button>
+            <button class="tab-btn" data-tab="허가 완료" onclick="setTab('change','허가 완료',this)">허가 완료</button>
+            <button class="tab-btn" data-tab="보완 중" onclick="setTab('change','보완 중',this)">보완 중</button>
+            <button class="tab-btn" data-tab="반려" onclick="setTab('change','반려',this)">반려</button>
+          </div>
+          <select class="filter-sel" id="mfg-change" onchange="renderList('change')"><option value="">전체 제조처</option></select>
+        </div>
+        <div class="list-scroll">
+          <div class="list-header-row"><div>제품명</div><div>접수일</div><div>허가일</div><div>상태 / 보완</div></div>
+          <div id="list-change"></div>
+        </div>
+      </div>
+      <div class="detail-right" id="detail-change"><div class="detail-empty-panel"><svg width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg><p>제품을 선택하면<br>상세 정보가 표시됩니다</p></div></div>
+    </div>
+  </div>
+
+  <div class="page" id="page-gmp">
+    <div class="list-page-wrap">
+      <div class="list-left">
+        <div class="list-toolbar">
+          <div class="tab-row">
+            <button class="tab-btn active" data-tab="all" onclick="setTab('gmp','all',this)">전체</button>
+            <button class="tab-btn" data-tab="허가 완료" onclick="setTab('gmp','허가 완료',this)">허가 완료</button>
+            <button class="tab-btn" data-tab="보완 중" onclick="setTab('gmp','보완 중',this)">보완 중</button>
+            <button class="tab-btn" data-tab="반려" onclick="setTab('gmp','반려',this)">반려</button>
+          </div>
+          <select class="filter-sel" id="mfg-gmp" onchange="renderList('gmp')"><option value="">전체 제조처</option></select>
+        </div>
+        <div class="list-scroll">
+          <div class="list-header-row"><div>제품명</div><div>접수일</div><div>허가일</div><div>상태 / 보완</div></div>
+          <div id="list-gmp"></div>
+        </div>
+      </div>
+      <div class="detail-right" id="detail-gmp"><div class="detail-empty-panel"><svg width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg><p>제품을 선택하면<br>상세 정보가 표시됩니다</p></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Product Form Modal -->
+<div class="overlay" id="formOverlay">
+  <div class="modal wide">
+    <div class="modal-head">
+      <h2 id="modalTitle">새 제품 등록</h2>
+      <button class="close-btn" onclick="closeForm()"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M6 18L18 6M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="section-divider">기본 정보</div>
+        <div class="fg full"><label>제품명 *</label><input id="f_name" placeholder="예: LATANOTOA"></div>
+        <div class="fg"><label>제조처 *</label><input id="f_mfg" placeholder="예: Nitto Medic"></div>
+        <div class="fg"><label>FDF Specification</label><input id="f_fdf" placeholder="NSX, JP 18 …"></div>
+        <div class="fg"><label>제품 유형</label>
+          <select id="f_cat">
+            <option value="new">신규 제품 등록</option>
+            <option value="change">변경 진행</option>
+            <option value="gmp">GMP 등록</option>
+          </select>
+        </div>
+        <div class="fg"><label>진행 상태</label>
+          <select id="f_status">
+            <option value="보완 중">보완 중</option>
+            <option value="허가 완료">허가 완료</option>
+            <option value="반려">반려</option>
+          </select>
+        </div>
+        <div class="fg"><label>등록 접수일</label><input type="date" id="f_reg"></div>
+        <div class="fg"><label>허가일</label><input type="date" id="f_app"></div>
+        <div class="fg full"><label>메모</label><textarea id="f_notes" placeholder="추가 메모…" rows="2"></textarea></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeForm()">취소</button>
+      <button class="btn btn-primary" onclick="saveProduct()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- Revision Form Modal -->
+<div class="overlay" id="revOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="revModalTitle">보완 추가</h2>
+      <button class="close-btn" onclick="closeRevForm()"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M6 18L18 6M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="fg full"><label>보완 차수</label><input type="number" id="rv_order" min="1" placeholder="1"></div>
+        <div class="fg full"><label>보완 내용</label><textarea id="rv_content" placeholder="보완 요청 내용을 입력하세요…" rows="3"></textarea></div>
+        <div class="fg"><label>보완 접수일</label><input type="date" id="rv_received"></div>
+        <div class="fg"><label>보완 마감일</label><input type="date" id="rv_deadline"></div>
+        <div class="fg full"><label>제출일 (완료 시)</label><input type="date" id="rv_submitted"></div>
+        <div class="fg full"><label>비고</label><textarea id="rv_notes" placeholder="기타 메모…" rows="2"></textarea></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeRevForm()">취소</button>
+      <button class="btn btn-primary" onclick="saveRevision()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm Modal -->
+<div class="overlay" id="confirmOverlay">
+  <div class="modal" style="max-width:360px">
+    <div class="modal-head"><h2>삭제 확인</h2><button class="close-btn" onclick="closeConfirm()"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M6 18L18 6M6 6l12 12"/></svg></button></div>
+    <div class="modal-body"><p class="confirm-body"><strong id="confirmName" style="color:#1a1d2e"></strong>을(를) 삭제할까요?<br><span style="font-size:12px;color:#9ca3af">이 작업은 되돌릴 수 없습니다.</span></p></div>
+    <div class="modal-foot"><button class="btn btn-ghost" onclick="closeConfirm()">취소</button><button class="btn btn-primary" style="background:#ef4444" onclick="doDelete()">삭제</button></div>
+  </div>
+</div>
+
+<div class="toasts" id="toasts"></div>
+
+<script>
+const KEY = 'pm_v3';
+let products = [], editId = null, selectedId = {new:null,change:null,gmp:null}, delId = null;
+let revEditId = null, revProductId = null;
+let tabFilters = {new:'all', change:'all', gmp:'all'};
+let searchQ = '';
+let currentPage = 'dashboard';
+
+// ── Data ──────────────────────────────────────────────────
+function load() {
+  try { products = JSON.parse(localStorage.getItem(KEY) || '[]'); } catch { products = []; }
+  if (!products.length) seed();
+}
+function save() { localStorage.setItem(KEY, JSON.stringify(products)); }
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
+
+function seed() {
+  products = [
+    { id: uid(), name: 'LATANOTOA', manufacturer: 'Nitto Medic', fdfSpec: 'NSX', category: 'new', regDate: '2019-06-06', approvalDate: '2025-10-20', status: '허가 완료', notes: '', revisions: [] },
+    { id: uid(), name: 'CLAMEDI', manufacturer: 'Nitto Medic', fdfSpec: 'JP 18', category: 'new', regDate: '2020-07-09', approvalDate: '2024-12-07', status: '허가 완료', notes: '', revisions: [] },
+    { id: uid(), name: 'FLORIDO', manufacturer: 'Nitto Medic', fdfSpec: 'NSX', category: 'new', regDate: '2025-04-03', approvalDate: '', status: '보완 중', notes: '', revisions: [
+      { id: uid(), order: 1, content: '제조방법 추가 자료 요청', received: '2025-05-01', deadline: '2025-07-15', submitted: '', notes: '' }
+    ]},
+    { id: uid(), name: 'MOMENITO 56', manufacturer: 'Nitto Medic', fdfSpec: 'NSX', category: 'change', regDate: '2022-02-15', approvalDate: '', status: '보완 중', notes: '규격 변경 건', revisions: [
+      { id: uid(), order: 1, content: '안정성 시험 자료 보완', received: '2023-03-01', deadline: '2023-06-01', submitted: '2023-05-20', notes: '' },
+      { id: uid(), order: 2, content: '기준 및 시험방법 추가', received: '2023-08-01', deadline: '2024-08-20', submitted: '', notes: '' },
+      { id: uid(), order: 3, content: '규격서 재작성 요청', received: '2024-09-01', deadline: '2026-08-10', submitted: '', notes: '추가 협의 필요' }
+    ]},
+    { id: uid(), name: 'MOMENITO 112', manufacturer: 'Nitto Medic', fdfSpec: 'NSX', category: 'gmp', regDate: '2022-02-15', approvalDate: '', status: '보완 중', notes: '', revisions: [
+      { id: uid(), order: 1, content: 'GMP 실사 대비 자료 제출', received: '2024-11-01', deadline: '2025-01-24', submitted: '2025-01-20', notes: '' },
+      { id: uid(), order: 2, content: '시설 현황 추가 서류', received: '2025-02-01', deadline: '2026-07-30', submitted: '', notes: '' },
+      { id: uid(), order: 3, content: '제조소 변경 확인서', received: '2025-06-01', deadline: '2026-08-01', submitted: '', notes: '' }
+    ]},
+  ];
+  save();
+}
+
+// ── Helpers ───────────────────────────────────────────────
+function esc(s) { return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function fmt(d) { return d ? d.replace(/-/g, '/') : '—'; }
+
+function daysUntil(dateStr) {
+  if (!dateStr) return null;
+  const diff = new Date(dateStr) - new Date();
+  return Math.ceil(diff / 86400000);
+}
+
+function urgencyClass(days) {
+  if (days === null) return '';
+  if (days <= 0) return 'urgent';
+  if (days <= 30) return 'urgent';
+  if (days <= 60) return 'warning';
+  return 'ok';
+}
+
+function revisionCount(p) {
+  return (p.revisions || []).length;
+}
+
+function lastDeadline(p) {
+  const revs = (p.revisions || []).filter(r => r.deadline && !r.submitted);
+  if (!revs.length) return null;
+  revs.sort((a, b) => new Date(b.deadline) - new Date(a.deadline));
+  return revs[0].deadline;
+}
+
+function hasCriticalDeadline(p) {
+  return (p.revisions || []).some(r => {
+    if (!r.deadline || r.submitted) return false;
+    const days = daysUntil(r.deadline);
+    return days !== null && days <= 60;
+  });
+}
+
+function catLabel(cat) {
+  if (cat === 'new') return '신규';
+  if (cat === 'change') return '변경';
+  if (cat === 'gmp') return 'GMP';
+  return cat;
+}
+function catCls(cat) {
+  if (cat === 'new') return 'cat-new';
+  if (cat === 'change') return 'cat-change';
+  if (cat === 'gmp') return 'cat-gmp';
+  return '';
+}
+
+// ── Pages ─────────────────────────────────────────────────
+function goPage(page) {
+  currentPage = page;
+  document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  document.getElementById('nav-' + page).classList.add('active');
+  const titles = { dashboard: '대시보드', new: '신규 제품 등록', change: '변경 진행', gmp: 'GMP 등록' };
+  document.getElementById('pageTitle').textContent = titles[page] || page;
+  document.getElementById('searchInput').value = '';
+  searchQ = '';
+  if (page !== 'dashboard') renderList(page);
+  else renderDashboard();
+}
+
+// ── Dashboard ─────────────────────────────────────────────
+function renderDashboard() {
+  const all = products;
+  const approved = all.filter(p => p.status === '허가 완료').length;
+  const pending = all.filter(p => p.status === '보완 중').length;
+  const critical = all.filter(p => hasCriticalDeadline(p)).length;
+
+  document.getElementById('dashStats').innerHTML = `
+    <div class="stat-card" onclick="goPage('new')">
+      <div class="s-label">신규 제품 등록</div>
+      <div class="s-val" style="color:#4f6ef7">${all.filter(p=>p.category==='new').length}</div>
+      <div class="s-sub">진행 중 포함</div>
+      <div class="s-icon blue"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
+    </div>
+    <div class="stat-card" onclick="goPage('change')">
+      <div class="s-label">변경 진행</div>
+      <div class="s-val" style="color:#7c3aed">${all.filter(p=>p.category==='change').length}</div>
+      <div class="s-sub">허가 후 변경 건</div>
+      <div class="s-icon purple"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg></div>
+    </div>
+    <div class="stat-card" onclick="goPage('gmp')">
+      <div class="s-label">GMP 등록</div>
+      <div class="s-val" style="color:#f59e0b">${all.filter(p=>p.category==='gmp').length}</div>
+      <div class="s-sub">GMP 관련 보완</div>
+      <div class="s-icon amber"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg></div>
+    </div>
+    <div class="stat-card">
+      <div class="s-label">마감 임박</div>
+      <div class="s-val" style="color:#ef4444">${critical}</div>
+      <div class="s-sub">60일 이내 마감</div>
+      <div class="s-icon red"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg></div>
+    </div>
+  `;
+
+  // Remind section
+  const urgentRevs = [];
+  products.forEach(p => {
+    (p.revisions || []).forEach(r => {
+      if (!r.deadline || r.submitted) return;
+      const days = daysUntil(r.deadline);
+      if (days !== null && days <= 60) {
+        urgentRevs.push({ product: p, rev: r, days });
+      }
+    });
+  });
+  urgentRevs.sort((a, b) => a.days - b.days);
+
+  const remindEl = document.getElementById('remindSection');
+  if (urgentRevs.length) {
+    remindEl.innerHTML = `
+      <div class="remind-banner" style="margin-bottom:20px">
+        <h3><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg> 마감일 임박 보완 (${urgentRevs.length}건)</h3>
+        ${urgentRevs.map(({product:p,rev:r,days}) => `
+          <div class="remind-item" onclick="goPage('${p.category}');setTimeout(()=>selectProduct('${p.id}','${p.category}'),100)" style="cursor:pointer">
+            <div class="ri-left">
+              <span class="ri-cat ${catCls(p.category)}">${catLabel(p.category)}</span>
+              <div>
+                <div class="ri-name">${esc(p.name)} — ${r.order}차 보완</div>
+                <div class="ri-detail">${esc(r.content||'')}</div>
+              </div>
+            </div>
+            <div class="ri-right">
+              <div>
+                <div style="font-size:11px;color:#9ca3af;text-align:right">마감</div>
+                <div style="font-size:12px;font-weight:700;color:#1a1d2e">${fmt(r.deadline)}</div>
+              </div>
+              <span class="days-badge ${days<=30?'days-critical':'days-warning'}">${days<=0?'마감':'D-'+days}</span>
+            </div>
+          </div>
+        `).join('')}
+      </div>`;
+  } else {
+    remindEl.innerHTML = '';
+  }
+
+  // Product list on dashboard
+  const el = document.getElementById('dashProductList');
+  if (!products.length) { el.innerHTML = '<div class="empty-list">등록된 제품이 없습니다</div>'; return; }
+  el.innerHTML = products.map(p => {
+    const dotCls = p.status==='허가 완료'?'dot-approved':p.status==='보완 중'?'dot-pending':'dot-rejected';
+    const bCls = p.status==='허가 완료'?'badge-approved':p.status==='보완 중'?'badge-pending':'badge-rejected';
+    const critical = hasCriticalDeadline(p);
+    return `<div class="product-row" onclick="goPage('${p.category}');setTimeout(()=>selectProduct('${p.id}','${p.category}'),100)" style="grid-template-columns:2fr 80px 1fr 90px">
+      <div class="pr-name-wrap">
+        <div class="pr-name"><div class="dot ${dotCls}"></div>${esc(p.name)}${critical?'<span style="font-size:10px;background:#fee2e2;color:#dc2626;padding:1px 5px;border-radius:4px;margin-left:4px">마감임박</span>':''}</div>
+        <div class="pr-sub">${esc(p.manufacturer)} · ${esc(p.fdfSpec)}</div>
+      </div>
+      <span class="ri-cat ${catCls(p.category)}" style="align-self:center">${catLabel(p.category)}</span>
+      <div class="pr-date-cell" style="align-self:center">${fmt(p.regDate)}</div>
+      <div style="display:flex;align-items:center;gap:6px;align-self:center">
+        <span class="pr-badge ${bCls}">${esc(p.status)}</span>
+        ${revisionCount(p)?`<span class="pr-rev-count">${revisionCount(p)}</span>`:''}
+      </div>
+    </div>`;
+  }).join('');
+
+  updateNavCounts();
+}
+
+function updateNavCounts() {
+  ['new','change','gmp'].forEach(cat => {
+    document.getElementById('nc-'+cat).textContent = products.filter(p=>p.category===cat).length;
+  });
+}
+
+// ── List ──────────────────────────────────────────────────
+function setTab(cat, tab, el) {
+  tabFilters[cat] = tab;
+  el.closest('.tab-row').querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  renderList(cat);
+}
+
+function onSearch() {
+  searchQ = document.getElementById('searchInput').value.toLowerCase();
+  if (currentPage !== 'dashboard') renderList(currentPage);
+  else renderDashboard();
+}
+
+function renderList(cat) {
+  const mfgSel = document.getElementById('mfg-'+cat);
+  const mfg = mfgSel ? mfgSel.value : '';
+  const tab = tabFilters[cat] || 'all';
+
+  // update mfg filter options
+  const mfgs = [...new Set(products.filter(p=>p.category===cat).map(p=>p.manufacturer).filter(Boolean))].sort();
+  if (mfgSel) {
+    const cur = mfgSel.value;
+    mfgSel.innerHTML = '<option value="">전체 제조처</option>' + mfgs.map(m=>`<option value="${esc(m)}"${m===cur?' selected':''}>${esc(m)}</option>`).join('');
+  }
+
+  let list = products.filter(p => {
+    if (p.category !== cat) return false;
+    if (tab !== 'all' && p.status !== tab) return false;
+    if (mfg && p.manufacturer !== mfg) return false;
+    if (searchQ && !p.name.toLowerCase().includes(searchQ) && !p.manufacturer.toLowerCase().includes(searchQ)) return false;
+    return true;
+  });
+
+  const el = document.getElementById('list-'+cat);
+  if (!list.length) { el.innerHTML = '<div class="empty-list">조건에 맞는 제품이 없습니다</div>'; return; }
+
+  el.innerHTML = list.map(p => {
+    const dotCls = p.status==='허가 완료'?'dot-approved':p.status==='보완 중'?'dot-pending':'dot-rejected';
+    const bCls = p.status==='허가 완료'?'badge-approved':p.status==='보완 중'?'badge-pending':'badge-rejected';
+    const sel = selectedId[cat] === p.id ? ' selected' : '';
+    const critical = hasCriticalDeadline(p);
+    const ld = lastDeadline(p);
+    const ldDays = daysUntil(ld);
+    return `<div class="product-row${sel}" onclick="selectProduct('${p.id}','${cat}')">
+      <div class="pr-name-wrap">
+        <div class="pr-name"><div class="dot ${dotCls}"></div>${esc(p.name)}${critical?'<span style="font-size:10px;background:#fee2e2;color:#dc2626;padding:1px 5px;border-radius:4px">!</span>':''}</div>
+        <div class="pr-sub">${esc(p.manufacturer)}${p.fdfSpec?' · '+esc(p.fdfSpec):''}</div>
+      </div>
+      <div class="pr-date-cell">${fmt(p.regDate)}</div>
+      <div class="pr-date-cell">${fmt(p.approvalDate)}</div>
+      <div style="display:flex;align-items:center;gap:5px">
+        <span class="pr-badge ${bCls}">${esc(p.status)}</span>
+        ${revisionCount(p)?`<span class="pr-rev-count">${revisionCount(p)}</span>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Detail ────────────────────────────────────────────────
+function selectProduct(id, cat) {
+  selectedId[cat] = id;
+  renderList(cat);
+  const p = products.find(x => x.id === id);
+  if (!p) return;
+  const el = document.getElementById('detail-'+cat);
+  const bCls = p.status==='허가 완료'?'badge-approved':p.status==='보완 중'?'badge-pending':'badge-rejected';
+  const revs = (p.revisions || []).slice().sort((a,b)=>a.order-b.order);
+
+  el.innerHTML = `
+    <div class="detail-panel-content">
+      <div class="detail-top-grad">
+        <div class="d-cat-label">${catLabel(p.category)}</div>
+        <h3>${esc(p.name)}</h3>
+        <div class="d-mfg">${esc(p.manufacturer)}${p.fdfSpec ? ' · ' + esc(p.fdfSpec) : ''}</div>
+        <span class="detail-status-badge">${esc(p.status)}</span>
+      </div>
+      <div class="detail-scroll">
+        <div class="detail-section">
+          <h4>기본 정보</h4>
+          <div class="d-grid">
+            <div class="d-field"><div class="k">등록 접수일</div><div class="v ${p.regDate?'':'em'}">${fmt(p.regDate)}</div></div>
+            <div class="d-field"><div class="k">허가일</div><div class="v ${p.approvalDate?'':'em'}">${fmt(p.approvalDate)}</div></div>
+            ${p.notes?`<div class="d-field" style="grid-column:1/-1"><div class="k">메모</div><div class="v" style="white-space:pre-wrap;font-weight:400">${esc(p.notes)}</div></div>`:''}
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <h4>보완 이력 (${revs.length}회)</h4>
+          <div class="rev-list">
+            ${revs.map(r => {
+              const days = daysUntil(r.deadline);
+              const uCls = r.submitted ? 'ok' : urgencyClass(days);
+              const isUrgent = !r.submitted && days !== null && days <= 60;
+              const dLabel = r.submitted ? '제출 완료' : days === null ? '—' : days <= 0 ? '마감' : 'D-'+days;
+              return `<div class="rev-item${isUrgent?' urgent-border':''}">
+                <div class="rev-head" onclick="toggleRev(this)">
+                  <div class="rev-head-left">
+                    <span class="rev-order">${r.order}차</span>
+                    <span class="rev-title">${esc(r.content||'내용 없음').slice(0,28)}${(r.content||'').length>28?'…':''}</span>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:6px">
+                    ${r.deadline?`<span class="rev-deadline ${r.submitted?'ok':uCls}">${dLabel}</span>`:''}
+                    ${r.submitted?'<span style="font-size:10px;background:#d1fae5;color:#065f46;padding:2px 6px;border-radius:4px;font-weight:700">완료</span>':''}
+                    <svg class="rev-toggle" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M19 9l-7 7-7-7"/></svg>
+                  </div>
+                </div>
+                <div class="rev-body">
+                  <div class="rev-body-grid">
+                    <div class="rb-field full"><div class="k">보완 내용</div><div class="v">${esc(r.content||'—')}</div></div>
+                    <div class="rb-field"><div class="k">보완 접수일</div><div class="v ${r.received?'':'em'}">${fmt(r.received)}</div></div>
+                    <div class="rb-field"><div class="k">보완 마감일</div><div class="v ${isUrgent?'urgent':''}">${fmt(r.deadline)}</div></div>
+                    <div class="rb-field"><div class="k">제출일</div><div class="v ${r.submitted?'':'em'}">${fmt(r.submitted)}</div></div>
+                    <div class="rb-field"><div class="k">남은 일수</div><div class="v ${isUrgent?'urgent':''}">${r.submitted?'제출 완료':days===null?'—':days<=0?'마감됨':'D-'+days+'일 남음'}</div></div>
+                    ${r.notes?`<div class="rb-field full"><div class="k">비고</div><div class="rb-notes">${esc(r.notes)}</div></div>`:''}
+                  </div>
+                  <div style="display:flex;gap:6px;margin-top:10px">
+                    <button class="btn-outline" style="flex:1;justify-content:center;font-size:11px" onclick="openRevEdit('${p.id}','${r.id}','${cat}')">수정</button>
+                    <button class="btn-red" style="flex:1;justify-content:center;font-size:11px" onclick="deleteRevision('${p.id}','${r.id}','${cat}')">삭제</button>
+                  </div>
+                </div>
+              </div>`;
+            }).join('')}
+            <button class="add-rev-btn" onclick="openRevAdd('${p.id}','${cat}')">
+              <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+              보완 추가
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="detail-actions-bar">
+        <button class="btn-outline" style="flex:1;justify-content:center" onclick="openEdit('${p.id}')">수정</button>
+        <button class="btn-red" style="flex:1;justify-content:center" onclick="openDeleteConfirm('${p.id}')">삭제</button>
+      </div>
+    </div>`;
+}
+
+function toggleRev(headEl) {
+  const body = headEl.nextElementSibling;
+  const arrow = headEl.querySelector('.rev-toggle');
+  body.classList.toggle('open');
+  arrow.classList.toggle('open');
+}
+
+// ── Product CRUD ──────────────────────────────────────────
+function openAdd() {
+  editId = null;
+  clearForm();
+  // Set category based on current page
+  const catMap = {new:'new',change:'change',gmp:'gmp'};
+  document.getElementById('f_cat').value = catMap[currentPage] || 'new';
+  document.getElementById('modalTitle').textContent = '새 제품 등록';
+  document.getElementById('formOverlay').classList.add('open');
+}
+function openEdit(id) {
+  editId = id;
+  const p = products.find(x=>x.id===id);
+  if(!p)return;
+  document.getElementById('modalTitle').textContent = '제품 수정';
+  document.getElementById('f_name').value=p.name;
+  document.getElementById('f_mfg').value=p.manufacturer;
+  document.getElementById('f_fdf').value=p.fdfSpec;
+  document.getElementById('f_cat').value=p.category;
+  document.getElementById('f_status').value=p.status;
+  document.getElementById('f_reg').value=p.regDate;
+  document.getElementById('f_app').value=p.approvalDate;
+  document.getElementById('f_notes').value=p.notes;
+  document.getElementById('formOverlay').classList.add('open');
+}
+function closeForm(){document.getElementById('formOverlay').classList.remove('open')}
+function clearForm(){['f_name','f_mfg','f_fdf','f_reg','f_app','f_notes'].forEach(i=>document.getElementById(i).value='');document.getElementById('f_status').value='보완 중';document.getElementById('f_cat').value='new'}
+
+function saveProduct(){
+  const name=document.getElementById('f_name').value.trim();
+  const mfg=document.getElementById('f_mfg').value.trim();
+  if(!name||!mfg){toast('제품명과 제조처는 필수입니다','err');return}
+  const data={name,manufacturer:mfg,fdfSpec:document.getElementById('f_fdf').value.trim(),category:document.getElementById('f_cat').value,status:document.getElementById('f_status').value,regDate:document.getElementById('f_reg').value,approvalDate:document.getElementById('f_app').value,notes:document.getElementById('f_notes').value.trim()};
+  if(editId){
+    const i=products.findIndex(p=>p.id===editId);
+    if(i>=0)products[i]={...products[i],...data};
+    toast('수정되었습니다','ok');
+    const p=products[i];
+    if(selectedId[p.category]===editId) setTimeout(()=>selectProduct(editId,p.category),50);
+  }else{
+    const newP={id:uid(),...data,revisions:[]};
+    products.unshift(newP);
+    toast('등록되었습니다','ok');
+  }
+  save();closeForm();renderAll();
+}
+
+function openDeleteConfirm(id){
+  delId=id;
+  const p=products.find(x=>x.id===id);
+  document.getElementById('confirmName').textContent=p?.name||'';
+  document.getElementById('confirmOverlay').classList.add('open');
+}
+function closeConfirm(){document.getElementById('confirmOverlay').classList.remove('open');delId=null}
+function doDelete(){
+  if(!delId)return;
+  const p=products.find(x=>x.id===delId);
+  const cat=p?.category;
+  products=products.filter(x=>x.id!==delId);
+  if(cat&&selectedId[cat]===delId){
+    selectedId[cat]=null;
+    if(cat) document.getElementById('detail-'+cat).innerHTML='<div class="detail-empty-panel"><svg width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg><p>제품을 선택하면<br>상세 정보가 표시됩니다</p></div>';
+  }
+  save();closeConfirm();toast('삭제되었습니다','ok');renderAll();
+}
+
+// ── Revision CRUD ─────────────────────────────────────────
+function openRevAdd(productId, cat){
+  revProductId=productId; revEditId=null;
+  const p=products.find(x=>x.id===productId);
+  const nextOrder=(p?.revisions||[]).length+1;
+  clearRevForm();
+  document.getElementById('rv_order').value=nextOrder;
+  document.getElementById('revModalTitle').textContent=`${nextOrder}차 보완 추가`;
+  document.getElementById('revOverlay').classList.add('open');
+  // store cat for after save
+  document.getElementById('revOverlay').dataset.cat=cat;
+}
+function openRevEdit(productId, revId, cat){
+  revProductId=productId; revEditId=revId;
+  const p=products.find(x=>x.id===productId);
+  const r=p?.revisions?.find(x=>x.id===revId);
+  if(!r)return;
+  document.getElementById('revModalTitle').textContent=`${r.order}차 보완 수정`;
+  document.getElementById('rv_order').value=r.order;
+  document.getElementById('rv_content').value=r.content;
+  document.getElementById('rv_received').value=r.received;
+  document.getElementById('rv_deadline').value=r.deadline;
+  document.getElementById('rv_submitted').value=r.submitted;
+  document.getElementById('rv_notes').value=r.notes;
+  document.getElementById('revOverlay').classList.add('open');
+  document.getElementById('revOverlay').dataset.cat=cat;
+}
+function closeRevForm(){document.getElementById('revOverlay').classList.remove('open')}
+function clearRevForm(){['rv_order','rv_content','rv_received','rv_deadline','rv_submitted','rv_notes'].forEach(i=>document.getElementById(i).value='')}
+
+function saveRevision(){
+  const p=products.find(x=>x.id===revProductId);
+  if(!p)return;
+  if(!p.revisions)p.revisions=[];
+  const order=parseInt(document.getElementById('rv_order').value)||p.revisions.length+1;
+  const data={order,content:document.getElementById('rv_content').value.trim(),received:document.getElementById('rv_received').value,deadline:document.getElementById('rv_deadline').value,submitted:document.getElementById('rv_submitted').value,notes:document.getElementById('rv_notes').value.trim()};
+  if(revEditId){
+    const i=p.revisions.findIndex(r=>r.id===revEditId);
+    if(i>=0)p.revisions[i]={...p.revisions[i],...data};
+    toast('보완 수정되었습니다','ok');
+  }else{
+    p.revisions.push({id:uid(),...data});
+    toast('보완이 추가되었습니다','ok');
+  }
+  // auto-update revisionCount reflected in title/status if needed
+  // sort revisions
+  p.revisions.sort((a,b)=>a.order-b.order);
+  save();
+  const cat=document.getElementById('revOverlay').dataset.cat;
+  closeRevForm();
+  renderAll();
+  if(cat) setTimeout(()=>selectProduct(revProductId,cat),50);
+}
+
+function deleteRevision(productId,revId,cat){
+  const p=products.find(x=>x.id===productId);
+  if(!p)return;
+  p.revisions=p.revisions.filter(r=>r.id!==revId);
+  save();toast('보완이 삭제되었습니다','ok');
+  renderAll();
+  setTimeout(()=>selectProduct(productId,cat),50);
+}
+
+// ── Render all ────────────────────────────────────────────
+function renderAll(){
+  updateNavCounts();
+  if(currentPage==='dashboard')renderDashboard();
+  else renderList(currentPage);
+}
+
+// ── Toast ─────────────────────────────────────────────────
+function toast(msg,type){
+  const el=document.createElement('div');el.className=`toast ${type}`;
+  el.innerHTML=`<svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">${type==='ok'?'<path d="M5 13l4 4L19 7"/>':'<path d="M6 18L18 6M6 6l12 12"/>'}</svg>${msg}`;
+  document.getElementById('toasts').appendChild(el);setTimeout(()=>el.remove(),2600);
+}
+
+// ── Export CSV ────────────────────────────────────────────
+function exportCSV(){
+  const rows=[];
+  rows.push(['유형','제품명','제조처','FDF Spec','접수일','허가일','상태','보완차수','보완내용','접수일','마감일','제출일','비고']);
+  products.forEach(p=>{
+    if(!p.revisions||!p.revisions.length){
+      rows.push([catLabel(p.category),p.name,p.manufacturer,p.fdfSpec,p.regDate,p.approvalDate,p.status,'','','','','',p.notes]);
+    }else{
+      p.revisions.forEach(r=>{
+        rows.push([catLabel(p.category),p.name,p.manufacturer,p.fdfSpec,p.regDate,p.approvalDate,p.status,r.order+'차',r.content,r.received,r.deadline,r.submitted,r.notes]);
+      });
+    }
+  });
+  const csv='\uFEFF'+rows.map(r=>r.map(v=>`"${String(v??'').replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
+  a.download=`등록제품_${new Date().toISOString().slice(0,10)}.csv`;a.click();
+  toast('CSV 내보내기 완료','ok');
+}
+
+// ── Clock ─────────────────────────────────────────────────
+function updateClock(){
+  const now=new Date();
+  document.getElementById('todayDate').textContent=now.toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'short'});
+  document.getElementById('nowTime').textContent=now.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeForm();closeRevForm();closeConfirm()}});
+
+load();renderDashboard();updateNavCounts();updateClock();
+setInterval(()=>{document.getElementById('nowTime').textContent=new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',second:'2-digit'})},1000);
+</script>
+</body>
+</html>
